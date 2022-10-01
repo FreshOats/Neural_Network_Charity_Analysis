@@ -29,46 +29,15 @@ application.nunique()
 
 ```
 
-<div>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>APPLICATION_TYPE</th>
-      <th>AFFILIATION</th>
-      <th>CLASSIFICATION</th>
-      <th>USE_CASE</th>
-      <th>ORGANIZATION</th>
-      <th>STATUS</th>
-      <th>INCOME_AMT</th>
-      <th>SPECIAL_CONSIDERATIONS</th>
-      <th>ASK_AMT</th>
-      <th>IS_SUCCESSFUL</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th></th>
-      <td>17</td>
-      <td>6</td>
-      <td>71</td>
-      <td>5</td>
-      <td>4</td>
-      <td>2</td>
-      <td>9</td>
-      <td>2</td>
-      <td>8747</td>
-      <td>2</td>
-    </tr>
-  </tbody>
-</table>
-</div>
+![Unique_Values](https://user-images.githubusercontent.com/33167541/193383979-b4a65ae4-41c8-4ee1-a49d-6a776586d9ba.png)
+
 
 The columns that contain more than 10 values are good candidates to bucketing, which include the Application Type, Classification, and the Ask Amount. The values were counted for the Application Types and Classifications, grouping the classes under a particular threshold into an 'Other' bin for the Neural Network analysis. This number was originally set looking at the density plots of the Application Type and Classification, but then were systematically adjusted during optimization to yield the ideal number of bins and splits for training. Below are the Application Type plot and subsequenty the Classification density plot. 
 
-APP_TYPE_PLOT
+![App_Type_Plot](https://user-images.githubusercontent.com/33167541/193383985-322ec6d9-976d-4381-800d-49ccd4955e82.png)
 
-CLASSIFICATION_PLOT
+![CLASSIFICATION_PLOT](https://user-images.githubusercontent.com/33167541/193383994-74996ffb-c178-47b0-9fc4-d647ef56918e.png)
+
 
 
 After grouping these, the Asking Amounts were grouped into bins, again adjusted during the optimization phase to determine the optimal number and spacing of the bins using the following code: 
@@ -118,7 +87,8 @@ nn.add(tf.keras.layers.Dense(units=1, activation='sigmoid'))
 nn.summary()
 ```
 
-SEQUENTIAL_PLOT
+![SEQUENTIAL_PLOT](https://user-images.githubusercontent.com/33167541/193384007-0747ed10-e1db-44fd-82e2-5c87c7620058.png)
+
 
 
 The models were complied using a 'binary crossentropy' loss function and 'adam' optimizer. While fitting the models, checkpoints were saved every 5 epochs. Finally the models were analyzed for accuracy and loss, comparing the trained model to the test dataset. 
@@ -183,7 +153,8 @@ Using Keras-Tuner, an attempt to find the optimal number of nodes and hidden lay
 
 In the initial model, rectified linear unit activation was used, which uses less processing power than the tanh function. While relu can lead to dead nodes, the number of nodes in this model are high, so the impact of gradient loss is minimal. The difference between the hyperbolic tangent function and the relu functions were minimal in this model. The hyperbolic tangent (tanh) function allows for negative values, whereas relu does not - rectifying all negative values to 0. The following models, as well as several others, were tested.
 
-NEURALNETWORK_DF 
+
+![NeuralNetsTests_DF](https://user-images.githubusercontent.com/33167541/193384016-497ccec2-21f7-43ba-860f-20773317ac88.png)
 
 
 Model 6 provided the highest consistent outcome of the models tested.
