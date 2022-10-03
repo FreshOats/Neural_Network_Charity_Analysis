@@ -40,7 +40,9 @@ The columns that contain more than 10 values are good candidates to bucketing, w
 
 
 
-After grouping these, the Asking Amounts were grouped into bins, again adjusted during the optimization phase to determine the optimal number and spacing of the bins using the following code: 
+After grouping these, the Asking Amounts and  Income Amounts were grouped into bins, again adjusted during the optimization phase to determine the optimal number and spacing of the bins using functions to convert them to binned integer values:
+
+To encode the Asking Amount, the following process was followed:
 
 ```python
 max_ask = application_df.ASK_AMT.max()
@@ -49,16 +51,65 @@ bins = [0, 5000, 10000, 50000, 100000, 500000, 1000000, max_ask]
 labels = [0, 1, 2, 3, 4, 5, 6]
 
 application_df["ASK_BIN"] = pd.cut(application_df["ASK_AMT"], bins=bins, labels=labels)
+
+
+def asking_bin(row):
+    bin = row['ASK_BIN']
+    bin_mean = 0
+    if bin == 0:
+        bin_mean = int(median[0])
+    elif bin == 1:
+        bin_mean = int(median[1])
+    elif bin == 2:
+        bin_mean = int(median[2])
+    elif bin == 3:
+        bin_mean = int(median[3])
+    elif bin == 4:
+        bin_mean = int(median[4])
+    elif bin == 5:
+        bin_mean = int(median[5])
+    elif bin == 6:
+        bin_mean = int(median[6])
+    return bin_mean
+
+
+application_df.ASK_BIN = application_df.apply(asking_bin, axis=1)
 ```
- 
-The pandas cut function cuts the selected data into groups right-inclusive up to the max value. 
+The pandas cut function cuts the selected data into groups right-inclusive up to the max value.
+A similar approach was taken with the Income Amounts: 
+```python
+def income_bin(row):
+    income = row['INCOME_AMT']
+    new_income = 0
+    if income == '0':
+        new_income = 0
+    elif income == '1-9999':
+        new_income = 10000
+    elif income == '10000-24999':
+        new_income = 25000
+    elif income == '25000-99999':
+        new_income = 100000
+    elif income == '100000-499999':
+        new_income = 500000
+    elif income == '1M-5M':
+        new_income = 1000000
+    elif income == '5M-10M':
+        new_income = 5000000
+    elif income == '10M-50M':
+        new_income = 10000000
+    elif income == '50M+':
+        new_income = 50000000
+    return new_income
+
+application_df.INCOME_AMT = application_df.apply(income_bin, axis=1)
+```
+Finally, instead of keeping the Special Considerations as categorical, it was also converted to numerical with 0 and 1 values. 
+
 
 ---
 ### Encoding the Categorical Features
 
-To encode the features, OneHotEncoder from scikit-learn was used, which separated the variables across many different columns of binary outputs. This was done for all columns except for the Amounts, which remained numerical until the optimization phase. During optimization, the ask amounts were binned either numerically or were treated categorically and adjusted by the OneHotEncoder.  
-
-Since the Special Considerations column was already binary, with a Y/N value, one of these columns was removed, as the information was redundant. By encoding the categorical features, the maximum number of unique values in any column was now limited to the number of bins accepted in the Asking Amount binning. 
+To encode the features, OneHotEncoder from scikit-learn was used, which separated the variables across many different columns of binary outputs. This was done for all columns except for the Amounts, which remained numerical until the optimization phase. During optimization, the ask amounts were binned either numerically or were treated categorically and adjusted by the OneHotEncoder. By encoding the categorical features, the maximum number of unique values in any column was now limited to the number of bins accepted in the Asking Amount binning. 
 
 
 --- 
@@ -147,17 +198,16 @@ Using Keras-Tuner, an attempt to find the optimal number of nodes and hidden lay
 
 - An optimal accuracy of 72.8% was achieved with the following parameters: 
     - Removal of USE_CASE and AMT_ASK columns
-    - 3 hidden layers with 21, 66, 91 nodes 
+    - 5 hidden layers with 56, 76, 36, 21, 11 nodes 21, 66, 91 nodes 
     - tanh activation functions for input and hidden layers
     - sigmoid activation for output
+    - 10 epochs 
 
 In the initial model, rectified linear unit activation was used, which uses less processing power than the tanh function. While relu can lead to dead nodes, the number of nodes in this model are high, so the impact of gradient loss is minimal. The difference between the hyperbolic tangent function and the relu functions were minimal in this model. The hyperbolic tangent (tanh) function allows for negative values, whereas relu does not - rectifying all negative values to 0. The following models, as well as several others, were tested.
 
 
 ![NeuralNetsTests_DF](https://user-images.githubusercontent.com/33167541/193384016-497ccec2-21f7-43ba-860f-20773317ac88.png)
 
-
-Model 6 provided the highest consistent outcome of the models tested.
 
 
 ---
